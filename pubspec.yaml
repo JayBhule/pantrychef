@@ -1,0 +1,43 @@
+name: pantrychef
+description: PantryChef – AI-Powered Recipe Generator. Turn your ingredients into delicious recipes using Groq AI.
+publish_to: 'none'
+
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # HTTP client for Groq API calls
+  http: ^1.2.1
+
+  # Local storage for favourite recipes
+  shared_preferences: ^2.2.3
+
+  # Image caching for recipe images
+  cached_network_image: ^3.3.1
+
+  # Shimmer loading effect
+  shimmer: ^3.0.0
+
+  # Google Fonts
+  google_fonts: ^6.2.1
+
+  # Cupertino icons
+  cupertino_icons: ^1.0.8
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^4.0.0
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    - assets/config/
+    - assets/images/
+

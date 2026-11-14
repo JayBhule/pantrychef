@@ -1,0 +1,7 @@
+# PantryChef - Groq API Key Configuration
+#
+# 1. Sign up and get a free key at https://console.groq.com
+# 2. Copy this file to assets/config/api_key.txt
+# 3. Replace the placeholder below with your key (e.g. gsk_...)
+#
+YOUR_GROQ_API_KEY_HERE
