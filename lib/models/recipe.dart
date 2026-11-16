@@ -29,15 +29,15 @@ class Recipe {
   /// Handles missing or malformed fields gracefully.
   factory Recipe.fromJson(Map<String, dynamic> json) {
     return Recipe(
-      id: json['id'] as String? ?? DateTime.now().millisecondsSinceEpoch.toString(),
-      name: json['name'] as String? ?? 'Unknown Recipe',
-      description: json['description'] as String? ?? '',
-      cookingTime: json['cooking_time'] as String? ?? 'Unknown',
-      difficulty: json['difficulty'] as String? ?? 'Medium',
+      id: json['id']?.toString() ?? DateTime.now().millisecondsSinceEpoch.toString(),
+      name: json['name']?.toString() ?? 'Unknown Recipe',
+      description: json['description']?.toString() ?? '',
+      cookingTime: json['cooking_time']?.toString() ?? 'Unknown',
+      difficulty: json['difficulty']?.toString() ?? 'Medium',
       availableIngredients: _parseStringList(json['available_ingredients']),
       missingIngredients: _parseStringList(json['missing_ingredients']),
       steps: _parseStringList(json['steps']),
-      imageUrl: json['image_url'] as String? ?? '',
+      imageUrl: json['image_url']?.toString() ?? '',
       isFavourite: json['is_favourite'] as bool? ?? false,
     );
   }

@@ -7,12 +7,18 @@ class AppConstants {
   /// API key is loaded at runtime from a local config file (not committed to git).
   static const String groqBaseUrl = 'https://api.groq.com/openai/v1/chat/completions';
 
-  /// The Groq model used for recipe generation.
-  /// llama-3.3-70b-versatile gives excellent recipe quality.
-  static const String groqModel = 'llama-3.3-70b-versatile';
+  /// The primary Groq model used for recipe generation.
+  /// openai/gpt-oss-20b provides fast, reliable structured JSON recipe generation.
+  static const String groqModel = 'openai/gpt-oss-20b';
 
-  /// Maximum tokens for the AI response – enough for 3 detailed recipes.
-  static const int maxTokens = 2048;
+  /// Fallback models tried in sequence if the primary model is unavailable.
+  static const List<String> fallbackModels = [
+    'openai/gpt-oss-120b',
+    'qwen/qwen3.8-27b',
+  ];
+
+  /// Maximum tokens for the AI response – generous limit for 3 detailed recipes with step-by-step instructions.
+  static const int maxTokens = 4096;
 
   // ─── SharedPreferences Keys ─────────────────────────────────────────────
   static const String favouritesKey = 'pantrychef_favourites';

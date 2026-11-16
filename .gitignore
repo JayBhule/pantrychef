@@ -55,3 +55,22 @@ ios/Flutter/flutter_export_environment.sh
 
 # API keys and secrets
 assets/config/api_key.txt
+
+# Environment variables and secrets
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+secrets/
+config/secrets/
+
+# Backup and temporary files
+android_backup/
+*.bak
+*.tmp
+
+# IDE and operating system files
+.vscode/
+Thumbs.db
+EOFgradle-*-all.zip

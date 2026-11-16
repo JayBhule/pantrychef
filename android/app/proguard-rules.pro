@@ -6,3 +6,6 @@
 -keepattributes *Annotation*
 # Prevent obfuscation of JSON model classes (Recipe model)
 -keep class com.pantrychef.pantrychef.** { *; }
+
+# Suppress Play Core warnings in R8
+-dontwarn com.google.android.play.core.**

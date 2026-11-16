@@ -110,12 +110,19 @@ COOKING TIME: $timeNote
 
 STRICT REQUIREMENTS:
 1. Use primarily the ingredients listed above.
-2. If a recipe needs 1–3 extra common pantry items, list them in "missing_ingredients".
-3. Keep each recipe practical and easy to follow.
-4. Respect the dietary preference strictly.
-5. Try to respect the cooking time constraint.
-6. Do NOT make any health or medical claims.
-7. Return ONLY valid JSON — no markdown, no extra text, nothing outside the JSON.
+2. If a recipe needs 1–3 extra common pantry items (spices, oil, garlic, etc.), list them in "missing_ingredients".
+3. Provide BIG, COMPREHENSIVE, STEP-BY-STEP cooking instructions (5 to 7 detailed steps per recipe).
+4. Each step MUST be thorough and descriptive (multiple sentences), including:
+   - A descriptive Step Title prefix indicating the stage (e.g. "Prep & Chopping: ", "Sautéing Aromatics: ", "Building the Gravy: ", "Simmering Vegetables: ", "Adding Paneer: ", "Finishing & Serving: ")
+   - Specific heat/flame level (e.g., low heat, medium flame, high simmer)
+   - Exact timings (e.g., "sauté for 4–5 minutes")
+   - Sensory and visual cues (e.g., "until onions turn golden brown and fragrant", "until oil begins to separate from the masala")
+   - Actionable chef tips for flavor development and texture
+5. Do NOT provide brief or one-sentence steps. Every step must be detailed, rich, and easy for any home cook to follow.
+6. Respect dietary preferences strictly.
+7. Try to respect the cooking time constraint.
+8. Do NOT make any health or medical claims.
+9. Return ONLY valid JSON — no markdown, no extra text, nothing outside the JSON.
 
 Return this exact JSON structure:
 {
@@ -123,15 +130,18 @@ Return this exact JSON structure:
     {
       "id": "unique_string_id",
       "name": "Recipe Name",
-      "description": "One or two sentence description of the dish.",
+      "description": "Two to three sentence enticing description of the dish.",
       "cooking_time": "X minutes",
       "difficulty": "Easy|Medium|Hard",
       "available_ingredients": ["ingredient1", "ingredient2"],
       "missing_ingredients": ["extra1"],
       "steps": [
-        "Step 1 description.",
-        "Step 2 description.",
-        "Step 3 description."
+        "Prep & Chopping: Wash and peel potatoes, cutting them into uniform 1-inch cubes so they cook evenly. Dice onions finely and puree or chop tomatoes. Cube the paneer into bite-sized pieces and soak in warm water for 5 minutes to keep them soft.",
+        "Tempering Aromatics: Heat 2 tablespoons of cooking oil in a deep pan or kadai over medium heat. Add minced garlic and chopped onions. Sauté for 4 to 5 minutes, stirring continuously, until onions become soft, translucent, and turn a light golden color.",
+        "Building the Gravy Base: Add the chopped tomatoes to the pan along with salt and spices. Cook on medium-low heat for 6 to 8 minutes, pressing down on the tomatoes until they break down into a thick, glossy gravy and oil begins to separate at the edges.",
+        "Simmering Potatoes: Add the cubed potatoes to the gravy and stir gently for 2 minutes to coat with the masala. Pour in 1.5 cups of warm water, bring to a boil, then cover with a lid and simmer on low heat for 12 to 15 minutes until potatoes are fork-tender.",
+        "Adding Paneer: Gently slide in the soaked paneer cubes and fold them carefully into the simmering curry without breaking them. Let simmer on low flame for another 4 to 5 minutes so the paneer absorbs the aromatic flavors.",
+        "Finishing & Resting: Turn off the heat. Adjust salt to taste and let the curry rest covered for 2 to 3 minutes before serving. Garnish with fresh coriander leaves and serve hot with rotis or steamed rice."
       ]
     }
   ]
@@ -139,52 +149,81 @@ Return this exact JSON structure:
   }
 
   /// Sends the prompt to the Groq API and returns the raw response body.
+  /// Automatically tries fallback models if the primary model encounters a 404/rate-limit.
   Future<String> _callGroqApi(String prompt) async {
-    final requestBody = jsonEncode({
-      'model': AppConstants.groqModel,
-      'messages': [
-        {
-          'role': 'system',
-          'content':
-              'You are a professional chef. Always respond with valid JSON only.',
-        },
-        {'role': 'user', 'content': prompt},
-      ],
-      'max_tokens': AppConstants.maxTokens,
-      'temperature': 0.7,
-      'response_format': {'type': 'json_object'},
-    });
+    final models = [
+      AppConstants.groqModel,
+      ...AppConstants.fallbackModels,
+    ];
 
-    final response = await _httpClient
-        .post(
-          Uri.parse(AppConstants.groqBaseUrl),
-          headers: {
-            // API key is passed in the Authorization header – never in the URL
-            'Authorization': 'Bearer $_apiKey',
-            'Content-Type': 'application/json',
+    GroqApiException? lastException;
+
+    for (final model in models) {
+      final requestBody = jsonEncode({
+        'model': model,
+        'messages': [
+          {
+            'role': 'system',
+            'content':
+                'You are a professional chef. Always respond with valid JSON only.',
           },
-          body: requestBody,
-        )
-        .timeout(const Duration(seconds: 30));
+          {'role': 'user', 'content': prompt},
+        ],
+        'max_tokens': AppConstants.maxTokens,
+        'temperature': 0.7,
+        'response_format': {'type': 'json_object'},
+      });
 
-    if (response.statusCode == 200) {
-      return response.body;
-    } else if (response.statusCode == 401) {
-      throw GroqApiException(
-        'Invalid API key. Please check your api_key.txt file.',
-        statusCode: 401,
-      );
-    } else if (response.statusCode == 429) {
-      throw GroqApiException(
-        'Rate limit exceeded. Please wait a moment and try again.',
-        statusCode: 429,
-      );
-    } else {
-      throw GroqApiException(
-        'API error (${response.statusCode}). Please try again.',
-        statusCode: response.statusCode,
-      );
+      try {
+        final response = await _httpClient
+            .post(
+              Uri.parse(AppConstants.groqBaseUrl),
+              headers: {
+                // API key is passed in the Authorization header – never in the URL
+                'Authorization': 'Bearer $_apiKey',
+                'Content-Type': 'application/json',
+              },
+              body: requestBody,
+            )
+            .timeout(const Duration(seconds: 60));
+
+        if (response.statusCode == 200) {
+          return response.body;
+        } else if (response.statusCode == 401) {
+          // Bad API key is fatal for all models – fail immediately
+          throw GroqApiException(
+            'Invalid API key. Please check your api_key.txt file.',
+            statusCode: 401,
+          );
+        } else if (response.statusCode == 429) {
+          lastException = GroqApiException(
+            'Rate limit exceeded. Please wait a moment and try again.',
+            statusCode: 429,
+          );
+          continue; // Try next model
+        } else if (response.statusCode == 404) {
+          lastException = GroqApiException(
+            'Model not found ($model).',
+            statusCode: 404,
+          );
+          continue; // Try next model
+        } else {
+          lastException = GroqApiException(
+            'API error (${response.statusCode}). Please try again.',
+            statusCode: response.statusCode,
+          );
+          continue; // Try next model
+        }
+      } on GroqApiException catch (e) {
+        if (e.statusCode == 401) rethrow;
+        lastException = e;
+      } catch (e) {
+        lastException = GroqApiException('Connection error ($model): $e');
+      }
     }
+
+    throw lastException ??
+        GroqApiException('Failed to generate recipes. Please try again.');
   }
 
   /// Parses the Groq API response body into a list of Recipe objects.

@@ -303,18 +303,57 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
       children: [
         Row(
           children: [
-            const Icon(
-              Icons.format_list_numbered_rounded,
-              size: 20,
-              color: AppTheme.primaryOrange,
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: AppTheme.primaryOrange.withOpacity(0.12),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: const Icon(
+                Icons.restaurant_menu_rounded,
+                size: 20,
+                color: AppTheme.primaryOrange,
+              ),
             ),
-            const SizedBox(width: 8),
-            Text('Cooking Instructions', style: AppTheme.heading3),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                'Cooking Instructions',
+                style: AppTheme.heading3.copyWith(fontSize: 18),
+              ),
+            ),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              decoration: BoxDecoration(
+                color: AppTheme.primaryOrange.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Text(
+                '${widget.recipe.steps.length} Steps',
+                style: AppTheme.bodySmall.copyWith(
+                  color: AppTheme.primaryOrange,
+                  fontWeight: FontWeight.w700,
+                  fontSize: 12,
+                ),
+              ),
+            ),
           ],
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 6),
+        Text(
+          'Follow these detailed step-by-step instructions for the best flavor and texture.',
+          style: AppTheme.bodySmall.copyWith(
+            color: AppTheme.textSecondary,
+            height: 1.4,
+          ),
+        ),
+        const SizedBox(height: 18),
         ...widget.recipe.steps.asMap().entries.map((entry) {
-          return _StepCard(stepNumber: entry.key + 1, step: entry.value);
+          return _StepCard(
+            stepNumber: entry.key + 1,
+            step: entry.value,
+            isLast: entry.key == widget.recipe.steps.length - 1,
+          );
         }),
       ],
     );
@@ -395,30 +434,64 @@ class _InfoBadge extends StatelessWidget {
 class _StepCard extends StatelessWidget {
   final int stepNumber;
   final String step;
+  final bool isLast;
 
-  const _StepCard({required this.stepNumber, required this.step});
+  const _StepCard({
+    required this.stepNumber,
+    required this.step,
+    this.isLast = false,
+  });
 
   @override
   Widget build(BuildContext context) {
+    // Parse step title and detailed body
+    String title = '';
+    String body = step.trim();
+
+    // Clean up any leading "Step X: " or "Step X - " if model generated it
+    final stepPrefixMatch =
+        RegExp(r'^(?:Step\s*\d+\s*[:.-]\s*)', caseSensitive: false)
+            .firstMatch(body);
+    if (stepPrefixMatch != null) {
+      body = body.substring(stepPrefixMatch.end).trim();
+    }
+
+    // Check if there is a stage title like "Prep & Chopping: Wash and cut..."
+    // or "**Prep & Chopping**: ..."
+    final colonIndex = body.indexOf(':');
+    if (colonIndex > 0 &&
+        colonIndex <= 45 &&
+        !body.substring(0, colonIndex).contains('.')) {
+      title = body.substring(0, colonIndex).replaceAll('*', '').trim();
+      body = body.substring(colonIndex + 1).trim();
+    }
+
     return Padding(
-      padding: const EdgeInsets.only(bottom: 14),
+      padding: EdgeInsets.only(bottom: isLast ? 0 : 16),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
-            width: 32,
-            height: 32,
+            width: 36,
+            height: 36,
             margin: const EdgeInsets.only(top: 2),
-            decoration: const BoxDecoration(
+            decoration: BoxDecoration(
               gradient: AppTheme.primaryGradient,
               shape: BoxShape.circle,
+              boxShadow: [
+                BoxShadow(
+                  color: AppTheme.primaryOrange.withOpacity(0.3),
+                  blurRadius: 6,
+                  offset: const Offset(0, 2),
+                ),
+              ],
             ),
             child: Center(
               child: Text(
                 '$stepNumber',
                 style: const TextStyle(
                   color: Colors.white,
-                  fontSize: 13,
+                  fontSize: 14,
                   fontWeight: FontWeight.w700,
                 ),
               ),
@@ -427,24 +500,61 @@ class _StepCard extends StatelessWidget {
           const SizedBox(width: 14),
           Expanded(
             child: Container(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(18),
               decoration: BoxDecoration(
                 color: AppTheme.surfaceWhite,
                 borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: Colors.black.withOpacity(0.05),
+                  width: 1,
+                ),
                 boxShadow: [
                   BoxShadow(
                     color: Colors.black.withOpacity(0.04),
-                    blurRadius: 8,
-                    offset: const Offset(0, 2),
+                    blurRadius: 10,
+                    offset: const Offset(0, 3),
                   ),
                 ],
               ),
-              child: Text(
-                step,
-                style: AppTheme.bodyMedium.copyWith(
-                  color: AppTheme.textPrimary,
-                  height: 1.6,
-                ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (title.isNotEmpty) ...[
+                    Row(
+                      children: [
+                        Container(
+                          width: 8,
+                          height: 8,
+                          margin: const EdgeInsets.only(right: 8),
+                          decoration: const BoxDecoration(
+                            color: AppTheme.primaryOrange,
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                        Expanded(
+                          child: Text(
+                            title,
+                            style: AppTheme.heading3.copyWith(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w700,
+                              color: AppTheme.textPrimary,
+                              letterSpacing: 0.2,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                  ],
+                  Text(
+                    body,
+                    style: AppTheme.bodyMedium.copyWith(
+                      color: AppTheme.textSecondary,
+                      height: 1.65,
+                      fontSize: 14,
+                    ),
+                  ),
+                ],
               ),
             ),
           ),
