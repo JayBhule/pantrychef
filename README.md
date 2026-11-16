@@ -20,16 +20,6 @@ PantryChef is a production-quality Flutter Android application that helps you de
 
 ---
 
-## 📸 Screenshots
-
-> _Add screenshots here after building the app._
-
-| Splash Screen | Home Screen | Recipe Results | Recipe Detail | Favourites |
-|---|---|---|---|---|
-| _(screenshot)_ | _(screenshot)_ | _(screenshot)_ | _(screenshot)_ | _(screenshot)_ |
-
----
-
 ## 🏗️ Technology Stack
 
 - **Framework**: Flutter 3.x
